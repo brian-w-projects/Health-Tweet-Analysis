@@ -1,0 +1,84 @@
+---
+title: "Health Tweets Presentation"
+author: "By Brian Weinfeld"
+date: "October 10, 2018"
+output: slidy_presentation
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+## Overview
+
+- 63000 tweets from health news providors
+- Taken bewteen 2013 and 2015
+- 16 different organizations
+- Source: <a href='https://archive.ics.uci.edu/ml/datasets/Health+News+in+Twitter'>https://archive.ics.uci.edu/ml/datasets/Health+News+in+Twitter</a>
+
+##
+
+<img src='https://raw.githubusercontent.com/brian-w-projects/health_tweets/master/plots/attributes.png'/>
+
+## 
+
+<img src='https://raw.githubusercontent.com/brian-w-projects/health_tweets/master/plots/tfidf.png'/>
+
+##
+
+<img src='https://raw.githubusercontent.com/brian-w-projects/health_tweets/master/plots/tfidf_all.png'/>
+
+##
+
+<img src='https://raw.githubusercontent.com/brian-w-projects/health_tweets/master/plots/sentiments.png'/>
+
+##
+
+<img src='https://raw.githubusercontent.com/brian-w-projects/health_tweets/master/plots/emotions.png'/>
+
+##
+
+<img src='https://raw.githubusercontent.com/brian-w-projects/health_tweets/master/plots/emotions_facet.png'/>
+
+## Unsupervised Learning
+
+```{r, message=FALSE}
+data <- read_csv('https://raw.githubusercontent.com/brian-w-projects/health_tweets/master/output.csv')
+data %>%
+  filter(row_number() <= 10 ) %>%
+  kable('html') %>% 
+  kable_styling(bootstrap_options = c('striped', 'hover'))
+```
+
+## Unsupervised Learning
+
+```{r, message=FALSE}
+data %>%
+  filter(row_number() > 10 & row_number() < 20) %>%
+  kable('html') %>% 
+  kable_styling(bootstrap_options = c('striped', 'hover'))
+```
+
+## Unsupervised Learning
+
+```{r, message=FALSE}
+data %>%
+  filter(row_number() > 20) %>%
+  kable('html') %>% 
+  kable_styling(bootstrap_options = c('striped', 'hover'))
+```
+
+## Conclusions
+
+* Tweets should reflect status and goal. 
+* Casual sources have more flexibility (negative vs. positive)
+* @ and # are important unique identifiers
+* Tweets should be timely and relate to the major topics of the day.
+
+
+
+
+
+
