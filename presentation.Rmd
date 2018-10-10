@@ -14,7 +14,7 @@ library(kableExtra)
 ## Overview
 
 - 63000 tweets from health news providors
-- Taken bewteen 2013 and 2015
+- Taken between 2013 and 2015
 - 16 different organizations
 - Source: <a href='https://archive.ics.uci.edu/ml/datasets/Health+News+in+Twitter'>https://archive.ics.uci.edu/ml/datasets/Health+News+in+Twitter</a>
 
@@ -44,28 +44,28 @@ library(kableExtra)
 
 ## Unsupervised Learning
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 data <- read_csv('https://raw.githubusercontent.com/brian-w-projects/health_tweets/master/output.csv')
 data %>%
-  filter(row_number() <= 10 ) %>%
+  filter(row_number() <= 8 ) %>%
   kable('html') %>% 
   kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
 
 ## Unsupervised Learning
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 data %>%
-  filter(row_number() > 10 & row_number() < 20) %>%
+  filter(row_number() > 9 & row_number() <= 16) %>%
   kable('html') %>% 
   kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
 
 ## Unsupervised Learning
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 data %>%
-  filter(row_number() > 20) %>%
+  filter(row_number() > 17) %>%
   kable('html') %>% 
   kable_styling(bootstrap_options = c('striped', 'hover'))
 ```
@@ -77,7 +77,13 @@ data %>%
 * @ and # are important unique identifiers
 * Tweets should be timely and relate to the major topics of the day.
 
-
+<style>
+img{
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+}
+</style>
 
 
 
