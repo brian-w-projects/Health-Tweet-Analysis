@@ -1,0 +1,286 @@
+---
+title: "Health Tweet"
+author: "Brian Weinfeld"
+date: "October 7, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidytext)
+library(RTextTools)
+library(scales)
+library(knitr)
+library(magrittr)
+library(stringi)
+library(ggrepel)
+```
+
+```{r, warning=FALSE}
+filenames <- list.files('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\data\\', pattern='*.txt', full.names=TRUE)
+raw.data <- filenames %>%
+  map_df(~read_delim(., delim='|', col_names=c('ID', 'Date', 'T1', 'T2'), quote='*', col_types='cccc', locale=locale(encoding='ISO-8859-1')) %>%
+           mutate(target = str_extract(.x, regex('(\\w+)(?=health(news|care)?\\.txt)', ignore.case=TRUE)))
+         ) %>%
+  unite('tweet', 'T1', 'T2') %>%
+  select(tweet, target) %>%
+  rowid_to_column('id') 
+```
+
+#Basic Statistics
+
+```{r}
+stat.data <- raw.data %>%
+  group_by(target) %>%
+  summarise(count = n(),
+         video = sum(str_detect(tweet, 'VIDEO')) / n(),
+         hash = sum(str_detect(tweet, '#')) / n(),
+         at = sum(str_detect(tweet, '@')) / n(),
+         link = sum(str_detect(tweet, 'http')) / n())
+```
+
+```{r}
+to.plot <- stat.data %>%
+  select(-count, -video) %>%
+  gather(attribute, frequency, hash, at, link) %>%
+  group_by(attribute) %>%
+  arrange(desc(frequency)) %>%
+  mutate(order = row_number()) %>%
+  mutate(disp=ifelse(order <= 3, target, '')) %>%
+  arrange(attribute, target)
+```
+
+```{r}
+ggplot(to.plot, aes(attribute, frequency, fill=target)) +
+  geom_bar(stat='identity', position='dodge') +
+  scale_y_continuous(expand=c(0, 0, 0, 0),
+                     labels=scales::percent_format()) +
+  scale_x_discrete(labels=c('@', '#', 'http'), 
+                   expand=expand_scale(mult=c(.25, .25))
+                   ) +
+  scale_fill_manual(values=c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711",  "#AAAA44", "#DDDD77", "#774411")
+                    ) +
+  labs(title='Frequency of Attributes',
+       subtitle='By Brian Weinfeld',
+       x='',
+       y='',
+       fill='Source') +
+  theme_bw() +
+  theme(axis.text.x=element_text(size=16),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        plot.title = element_text(size=25, face='bold'),
+        plot.subtitle = element_text(size=12),
+        legend.background = element_rect(fill='grey95', color='black'),
+        plot.margin = margin(50, 20, 50, 0))
+ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\attributes.png')
+```
+
+#Bag of Words Analysis
+
+```{r, message=FALSE}
+data <- raw.data %>%
+  unnest_tokens(word, tweet, token='tweets') %>%
+  anti_join(stop_words)
+```
+
+#TFIDF
+
+```{r}
+data.tfidf <- data %>%
+  count(target, word) %>%
+  bind_tf_idf(word, target, n) %>%
+  arrange(target, desc(tf_idf)) %>%
+  mutate(order = row_number()) %>%
+  group_by(target) %>%
+  top_n(5, tf_idf)
+kable(data.tfidf[1:10, ])
+```
+
+```{r, message=FALSE, fig.height=10}
+ggplot(data.tfidf, aes(order, tf_idf, fill=tf_idf)) +
+  geom_bar(show.legend=FALSE, stat='identity') +
+  facet_wrap(~target, scales='free') +
+  scale_x_continuous(
+    breaks = data.tfidf$order,
+    labels = data.tfidf$word,
+    expand = expand_scale(mult=c(.05, .05))
+  ) +
+  scale_y_continuous(
+    expand = expand_scale(mult=c(0, .1)),
+    labels = scales::format_format(scientific=FALSE)
+    ) +
+  scale_fill_gradient(low = "yellow", high = "red") +
+  labs(x=NULL,
+       y=NULL,
+       title='Top 5 Best Identifying Words by Source',
+       subtitle='By Brian Weinfeld') +
+  theme_bw() + 
+  theme(axis.text.x=element_text(angle=-30, vjust=1, hjust=0),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        plot.margin = margin(25, 75, 25, 25),
+        plot.title = element_text(size=25, face='bold'),
+        plot.subtitle = element_text(size=12),
+        strip.background = element_rect(fill='grey50'),
+        strip.text = element_text(color='white', size=16),
+        axis.text.x.bottom = element_text(size=12))
+ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\tfidf.png')
+```
+
+```{r, message=FALSE}
+data.tfidf.all <- data %>%
+  count(target, word) %>%
+  bind_tf_idf(word, target, n) %>%
+  arrange(desc(tf_idf)) %>%
+  mutate(order = row_number()) %>%
+  top_n(10, tf_idf)
+```
+
+```{r}
+ggplot(data.tfidf.all, aes(order, tf_idf, fill=tf_idf)) +
+  geom_bar(show.legend=FALSE, stat='identity') +
+  scale_x_continuous(
+    breaks = data.tfidf.all$order,
+    labels = data.tfidf.all$word,
+    expand = expand_scale(mult=c(0.05, .05))
+  ) +
+  scale_y_continuous(
+    labels = scales::format_format(scientific=FALSE),
+    expand = expand_scale(mult=c(0, .1))
+    ) +
+  scale_fill_gradient(low = "yellow", high = "red") +
+  labs(x=NULL,
+       y=NULL,
+       title='Top 10 Best Identifying Words',
+       subtitle='By Brian Weinfeld') +
+  theme_bw() + 
+  theme(axis.text.x=element_text(angle=-30, vjust=1, hjust=0),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        plot.margin = margin(25, 75, 25, 25),
+        plot.title = element_text(size=25, face='bold'),
+        plot.subtitle = element_text(size=12),
+        axis.text.x.bottom = element_text(size=16))
+ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\tfidf_all.png')
+```
+
+```{r, message=FALSE}
+data %>%
+  inner_join(get_sentiments('nrc')) %>%
+  group_by(target) %>%
+  count(sentiment) %>%
+  ggplot(aes(target, n, fill=sentiment)) +
+  geom_bar(stat='identity', position='fill') +
+  scale_x_discrete(expand=c(0.02, 0.02, 0, 0)) +
+  scale_y_continuous(expand=c(0, 0, 0, 0),
+                     labels=scales::percent_format()
+                     ) +
+  scale_fill_brewer(palette='Set3') +
+  labs(x='',
+       y='',
+       fill='Sentiment',
+       title='Use of Sentiment Words',
+       subtitle='By Brian Weinfeld') +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=-30, vjust=1, hjust=0),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      plot.margin = margin(25, 75, 25, 25),
+      plot.title = element_text(size=25, face='bold'),
+      plot.subtitle = element_text(size=12),
+      axis.text.x.bottom = element_text(size=11),
+      axis.text.y.left = element_text(size=11),
+      legend.background = element_rect(fill='grey95', color='black'),
+      legend.key.height = unit(0.6, 'cm'))
+ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\sentiments.png')
+```
+
+```{r, message=FALSE}
+data %>%
+  inner_join(get_sentiments('afinn')) %>%
+  group_by(target) %>%
+  count(score) %>%
+  ggplot(aes(target, n, fill=factor(score))) +
+  geom_bar(stat='identity', position=position_fill(reverse=TRUE)) +
+  scale_fill_brewer(palette='RdYlGn') +
+  scale_x_discrete(expand=c(0.02, 0.02, 0, 0)) +
+  scale_y_continuous(expand=c(0, 0, 0, 0),
+                     labels=scales::percent_format()
+                     ) +
+  labs(x='',
+       y='',
+       fill='Strength',
+       title='Use of Emotional Words',
+       subtitle='By Brian Weinfeld') +
+  guides(fill = guide_legend(reverse=TRUE)) +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=-30, vjust=1, hjust=0),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      plot.margin = margin(10, 30, 0, 0),
+      plot.title = element_text(size=25, face='bold'),
+      plot.subtitle = element_text(size=12),
+      axis.text.x.bottom = element_text(size=11),
+      axis.text.y.left = element_text(size=11),
+      legend.background = element_rect(fill='grey95', color='black'),
+      legend.key.height = unit(0.6, 'cm'))
+ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\emotions.png')
+```
+
+```{r, message=FALSE}
+afinn.data <- data %>%
+  inner_join(get_sentiments('afinn')) %>%
+  count(target, word, score) %>%
+  mutate(total = n/sum(n))
+```
+
+```{r}
+ggplot(afinn.data, aes(factor(score), total, fill=factor(score))) +
+  geom_bar(stat='identity') +
+  facet_wrap(~target, ncol=4) +
+  scale_y_continuous(limits=c(0,.04), 
+                     breaks=seq(0,.04,.01), 
+                     expand = expand_scale(mult=c(0, .02)), 
+                     labels=scales::percent_format(accuracy=1)) +
+  scale_fill_brewer(palette='RdYlGn') + 
+  labs(x='Sentiment Score',
+       y='Frequency',
+       title='Use of Emotional Words',
+       subtitle='By Brian Weinfeld') +
+  theme_bw() + 
+  theme(legend.position='none',
+        panel.grid.minor=element_blank(),
+        panel.grid.major.x=element_blank(),
+        strip.background = element_rect(fill='grey50'),
+        strip.text = element_text(color='white', size=11))
+ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\emotions_facet.png')
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
