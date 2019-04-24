@@ -18,7 +18,7 @@ library(ggrepel)
 ```
 
 ```{r, warning=FALSE}
-filenames <- list.files('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\data\\', pattern='*.txt', full.names=TRUE)
+filenames <- list.files('../data/', pattern='*.txt', full.names=TRUE)
 raw.data <- filenames %>%
   map_df(~read_delim(., delim='|', col_names=c('ID', 'Date', 'T1', 'T2'), quote='*', col_types='cccc', locale=locale(encoding='ISO-8859-1')) %>%
            mutate(target = str_extract(.x, regex('(\\w+)(?=health(news|care)?\\.txt)', ignore.case=TRUE)))
@@ -59,7 +59,8 @@ ggplot(to.plot, aes(attribute, frequency, fill=target)) +
   scale_x_discrete(labels=c('@', '#', 'http'), 
                    expand=expand_scale(mult=c(.25, .25))
                    ) +
-  scale_fill_manual(values=c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711",  "#AAAA44", "#DDDD77", "#774411")
+  scale_fill_manual(values=c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", 
+                             "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711",  "#AAAA44", "#DDDD77", "#774411")
                     ) +
   labs(title='Frequency of Attributes',
        subtitle='By Brian Weinfeld',
@@ -74,7 +75,6 @@ ggplot(to.plot, aes(attribute, frequency, fill=target)) +
         plot.subtitle = element_text(size=12),
         legend.background = element_rect(fill='grey95', color='black'),
         plot.margin = margin(50, 20, 50, 0))
-ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\attributes.png')
 ```
 
 #Bag of Words Analysis
@@ -126,7 +126,6 @@ ggplot(data.tfidf, aes(order, tf_idf, fill=tf_idf)) +
         strip.background = element_rect(fill='grey50'),
         strip.text = element_text(color='white', size=16),
         axis.text.x.bottom = element_text(size=12))
-ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\tfidf.png')
 ```
 
 ```{r, message=FALSE}
@@ -163,7 +162,6 @@ ggplot(data.tfidf.all, aes(order, tf_idf, fill=tf_idf)) +
         plot.title = element_text(size=25, face='bold'),
         plot.subtitle = element_text(size=12),
         axis.text.x.bottom = element_text(size=16))
-ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\tfidf_all.png')
 ```
 
 ```{r, message=FALSE}
@@ -194,7 +192,6 @@ data %>%
       axis.text.y.left = element_text(size=11),
       legend.background = element_rect(fill='grey95', color='black'),
       legend.key.height = unit(0.6, 'cm'))
-ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\sentiments.png')
 ```
 
 ```{r, message=FALSE}
@@ -226,7 +223,6 @@ data %>%
       axis.text.y.left = element_text(size=11),
       legend.background = element_rect(fill='grey95', color='black'),
       legend.key.height = unit(0.6, 'cm'))
-ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\emotions.png')
 ```
 
 ```{r, message=FALSE}
@@ -255,32 +251,4 @@ ggplot(afinn.data, aes(factor(score), total, fill=factor(score))) +
         panel.grid.major.x=element_blank(),
         strip.background = element_rect(fill='grey50'),
         strip.text = element_text(color='white', size=11))
-ggsave('C:\\Users\\Brian\\Desktop\\GradClasses\\personal\\health_tweets\\emotions_facet.png')
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
