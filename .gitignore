@@ -1,6 +1,8 @@
 
 .idea/
 .ipynb_checkpoints/
+.RData
+.Rhistory
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
